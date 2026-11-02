@@ -3,6 +3,9 @@
 数据来源：agi-research-program/p1/claims.json（30 条真实 claim）
 + agi-research-program/p1/recompute_receipts.json（23 条真实独立重算 receipt）。
 这验证：不是合成夹具，而是真实科研数据能跑通可核查性判定。
+
+若数据文件不存在（如从开源仓库单独 clone 时），测试自动 skip——数据不属于开源仓库，
+需要用户在自己的工作区里提供。
 """
 import json
 import sys
@@ -18,14 +21,22 @@ sys.path.insert(0, str(WORKSPACE / "eval-meta"))
 from eval_meta.ledger import Claim, ClaimState, Evidence, Ledger  # noqa: E402
 
 
+def _require_p1():
+    """P1 数据不在开源仓库内——缺失时 skip。"""
+    if not (P1_DIR / "claims.json").exists() or not (P1_DIR / "recompute_receipts.json").exists():
+        pytest.skip(f"P1 数据不存在（{P1_DIR}）——需在工作区提供 claims.json + recompute_receipts.json")
+
+
 @pytest.fixture
 def p1_claims():
+    _require_p1()
     d = json.loads((P1_DIR / "claims.json").read_text())
     return d.get("claims", d) if isinstance(d, dict) else d
 
 
 @pytest.fixture
 def p1_receipts():
+    _require_p1()
     d = json.loads((P1_DIR / "recompute_receipts.json").read_text())
     return d.get("receipts", d) if isinstance(d, dict) else d
 
