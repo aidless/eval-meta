@@ -1,7 +1,7 @@
 # 评测元系统（eval-meta）工程
 
 > 对应「评测系统架构 · 工程蓝图」的**可运行实现**——把「评测的评测」做成一等公民的工程。
-> 所有组件锚定在已验证外部证据上（7 篇验号论文 + 373 项研究综述），每个模块的存在理由 = 一条可复现失效模式。
+> 所有组件锚定在已验证外部证据上（6 篇验号论文 + 1 份内部程序文档 + 373 项研究综述），每个模块的存在理由 = 一条可复现失效模式。
 
 ## 模块（7 个，全部实现并测试通过）
 
@@ -13,9 +13,14 @@
 | `judge` | §4.2 judge 校准层 | 2026 Crossref/PLOS One + `2502.01534` | 位置/长度/自我/权威四偏差校正（最小二乘估计，min 30 样本）+ 抗偏好泄漏判红 | 8 |
 | `reliab` | §4.3 五九可靠性 | 蓝图 §4.3 | 样本高效可靠度估计（五九需 ~30 万样本）+ 达到目标所需样本量 | 6 |
 | `selfaudit` | §5 自我审计层 | `2606.30219` + `2608.08722` | 校准探针（已知真值）+ 失效分类 gamed/overfit/benign | 6 |
-| `ledger` | §2 证据链 | PROGRAM.md P1 | 数字有载体：claim-evidence 链 + 独立重算（不一致必抓） | 6 |
+| `ledger` | §2 证据链 | 内部程序文档 P1（不在仓内） | 数字有载体：claim-evidence 链 + 独立重算（不一致必抓） | 6 |
 
-**合计：46 个模块测试 + 10 个集成测试 + 3 个 CLI 测试 = 59 个测试，全绿（1.04s），每个模块 `--selftest` PASS。**
+**合计：46 个模块测试 + 10 个集成测试 + 3 个 CLI 测试 = 59 个测试被收集。**
+
+在**独立 clone**（无外部工作区）下实跑结果是 **49 passed + 10 skipped**：那 10 个集成测试
+依赖仓外兄弟目录的数据文件（`../llm-agent-projects/20-llm-eval-benchmark/data/` 与
+`../agi-research-program/p1/`），数据不在本仓内，缺文件时按设计 skip。
+每个模块的 `--selftest` 全部 PASS。
 
 > 架构说明见 `ARCHITECTURE.md`（组件职责、数据流、自指问题处理、测试策略、关键设计决策）。
 
@@ -23,7 +28,7 @@
 
 ```bash
 cd eval-meta
-python3 -m pytest tests/ -q                          # 全部测试（59 个）
+python3 -m pytest tests/ -q                          # 49 passed + 10 skipped（跳过项需仓外数据）
 python3 -m eval_meta.conform --selftest              # 抗污染门自检
 python3 -m eval_meta.validity --selftest             # 协议效度门自检
 python3 -m eval_meta.rigor --selftest                # 统计严谨门自检
@@ -45,14 +50,20 @@ python3 -m eval_meta.cli pipeline \
 
 流水线顺序：`conform`（抗污染）→ `validity`（协议效度）→ `rigor`（统计严谨）→ `judge`（校准）→ `reliab`（可靠性）→ `selfaudit`（自我审计）→ `ledger`（证据链）。输出合法 JSON，每阶段带 verdict + 明细。
 
-**真实数据模式**（`--claims`/`--receipts`）已端到端验证：30 条真实 claim + 23 条真实独立重算 receipt → **7 模块全 PASS**（`selfaudit` 用独立重算一致性作已知真值探针，`ledger` 用真实 claim 证据链）。
+**真实数据模式**（`--claims`/`--receipts`）的端到端路径已验证：30 条 claim + 23 条独立重算 receipt → **7 模块全 PASS**（`selfaudit` 用独立重算一致性作已知真值探针，`ledger` 用 claim 证据链）。
+
+> 证据边界：这 30 条 claim / 23 条 receipt 的数据文件来自仓外工作区
+> （`agi-research-program/p1/`），**不随本仓发布**，所以在独立 clone 上对应断言是 skip
+> 而不是 pass——本仓**无法自证**这组数字。机制本身可核：把同形数据喂给
+> `python3 -m eval_meta.cli pipeline --claims … --receipts …` 会输出 `"verdict": "PASS"`、
+> `"data_mode": "real"`。
 
 ## 纪律
 
 - 每个模块带 `--selftest`（注入违规必须 exit≠0，AGENTS.md 第 21 条 RED→GREEN）。
 - 每个数字有载体：`ledger` 记录 evidence path + locator，无法追溯的声明不写。
 - Null 也是结果：未观测到 ≠ 不存在。
-- 独立重算是外部验证（PROGRAM.md P1）：`ledger.recompute()` 不一致必抓。
+- 独立重算是外部验证（内部程序文档 P1，该文档不在本仓内）：`ledger.recompute()` 不一致必抓。
 
 ## 锚定证据（全部验号）
 
@@ -64,4 +75,4 @@ python3 -m eval_meta.cli pipeline \
 | `2502.01534` 偏好泄漏 | arXiv abs 已验号 | `judge` |
 | `2606.30219` EvalSafetyGap | arXiv abs 已验号（373 项研究） | `selfaudit` |
 | `2608.08722` 指纹化 | arXiv abs 已验号 | `selfaudit` |
-| PROGRAM.md P1 | 证据链纪律（预注册/主指标唯一/独立重算/Null 也是结果） | `ledger` |
+| 内部程序文档 P1（不在仓内） | 证据链纪律（预注册/主指标唯一/独立重算/Null 也是结果） | `ledger` |
