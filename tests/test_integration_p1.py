@@ -1,43 +1,41 @@
-"""端到端集成测试——用真实 P1 数据验证 eval-meta 全流水线。
+"""端到端集成测试——兄弟仓 P1 数据，不在本仓库内。
 
-数据来源：agi-research-program/p1/claims.json（30 条真实 claim）
-+ agi-research-program/p1/recompute_receipts.json（23 条真实独立重算 receipt）。
-这验证：不是合成夹具，而是真实科研数据能跑通可核查性判定。
+需要（相对兄弟根目录，默认是本仓库的父目录，可用 EVAL_META_SIBLING_ROOT 覆盖）：
+- agi-research-program/p1/claims.json
+- agi-research-program/p1/recompute_receipts.json
 
-若数据文件不存在（如从开源仓库单独 clone 时），测试自动 skip——数据不属于开源仓库，
-需要用户在自己的工作区里提供。
+文件不在时 skip。skip 不是通过，也不计入离线覆盖。
 """
 import json
-import sys
-from pathlib import Path
 
 import pytest
 
-# 找到工作区根（eval-meta 的父目录）
-WORKSPACE = Path(__file__).resolve().parents[2]
-P1_DIR = WORKSPACE / "agi-research-program" / "p1"
-sys.path.insert(0, str(WORKSPACE / "eval-meta"))
+from eval_meta.ledger import Claim, ClaimState, Evidence, Ledger
+from eval_meta.siblings import P1_SKIP, p1_files
 
-from eval_meta.ledger import Claim, ClaimState, Evidence, Ledger  # noqa: E402
+pytestmark = pytest.mark.sibling_repo
 
 
 def _require_p1():
-    """P1 数据不在开源仓库内——缺失时 skip。"""
-    if not (P1_DIR / "claims.json").exists() or not (P1_DIR / "recompute_receipts.json").exists():
-        pytest.skip(f"P1 数据不存在（{P1_DIR}）——需在工作区提供 claims.json + recompute_receipts.json")
+    """P1 数据不在本仓库内——缺失时 skip，原因里只有相对标签。"""
+    claims, receipts = p1_files()
+    if not claims.is_file() or not receipts.is_file():
+        pytest.skip(P1_SKIP)
 
 
 @pytest.fixture
 def p1_claims():
     _require_p1()
-    d = json.loads((P1_DIR / "claims.json").read_text())
+    claims, _ = p1_files()
+    d = json.loads(claims.read_text())
     return d.get("claims", d) if isinstance(d, dict) else d
 
 
 @pytest.fixture
 def p1_receipts():
     _require_p1()
-    d = json.loads((P1_DIR / "recompute_receipts.json").read_text())
+    _, receipts = p1_files()
+    d = json.loads(receipts.read_text())
     return d.get("receipts", d) if isinstance(d, dict) else d
 
 
@@ -87,5 +85,7 @@ def test_real_recompute_all_match(p1_claims, p1_receipts):
 
 def test_real_receipts_all_ok(p1_receipts):
     """真实 receipts 官方 all_ok=True（P1_FREEZE 基准）。"""
-    d = json.loads((P1_DIR / "recompute_receipts.json").read_text())
+    _require_p1()
+    _, receipts = p1_files()
+    d = json.loads(receipts.read_text())
     assert d.get("all_ok") is True

@@ -1,78 +1,43 @@
-# 评测元系统（eval-meta）工程
+# eval-meta
 
-> 对应「评测系统架构 · 工程蓝图」的**可运行实现**——把「评测的评测」做成一等公民的工程。
-> 所有组件锚定在已验证外部证据上（6 篇验号论文 + 1 份内部程序文档 + 373 项研究综述），每个模块的存在理由 = 一条可复现失效模式。
+An evaluator can pass its own checks and still be a bad judge: contaminated items, a leaked preference, or a calibration number nobody recomputed.
+This package runs seven local checks and labels each result as measured, scripted, or unverified.
+It does not certify a judge, and a skipped sibling-repo test is not a pass.
 
-## 模块（7 个，全部实现并测试通过）
+## In-repo fixtures
 
-| 模块 | 蓝图章节 | 锚定证据 | 职责 | 测试数 |
-|---|---|---|---|---|
-| `conform` | §3.2 抗污染门 | `2405.16281` ConStat | 行为性污染检测（无需训练数据），三档分级 L1≤2%/L2≤10%/L3>10%（相对差） | 6 |
-| `validity` | §3.3 协议效度门 | `2607.22368` HackDetect | 奖励黑客审计（5 类）+ Mislead gap>0.02 判无效 | 6 |
-| `rigor` | §4.1 统计严谨门 | Agreement by Construction | κ 触及报告（被触及/未触及分别报 κ，充高警告）+ Cohen's d + Wilson CI | 8 |
-| `judge` | §4.2 judge 校准层 | 2026 Crossref/PLOS One + `2502.01534` | 位置/长度/自我/权威四偏差校正（最小二乘估计，min 30 样本）+ 抗偏好泄漏判红 | 8 |
-| `reliab` | §4.3 五九可靠性 | 蓝图 §4.3 | 样本高效可靠度估计（五九需 ~30 万样本）+ 达到目标所需样本量 | 6 |
-| `selfaudit` | §5 自我审计层 | `2606.30219` + `2608.08722` | 校准探针（已知真值）+ 失效分类 gamed/overfit/benign | 6 |
-| `ledger` | §2 证据链 | 内部程序文档 P1（不在仓内） | 数字有载体：claim-evidence 链 + 独立重算（不一致必抓） | 6 |
+These files live in this repository. Nothing in this section reads a sibling checkout.
 
-**合计：46 个模块测试 + 10 个集成测试 + 3 个 CLI 测试 = 59 个测试被收集。**
+- Unit tests and the CLI tests, except the two modules under [Sibling-repo dependencies](#sibling-repo-dependencies).
+- `python -m eval_meta.cli pipeline` uses the scripted literals in `eval_meta/cli.py`. The judge stage is `SCRIPTED`, not `PASS`.
+- `python -m eval_meta.cli offline` reads only `fixtures/offline/bad_judge.json`. That file is synthetic. The command reports `REFUSED` / `tau_below_floor`. `REFUSED` means the bad record was rejected. It is not a pass.
 
-在**独立 clone**（无外部工作区）下实跑结果是 **49 passed + 10 skipped**：那 10 个集成测试
-依赖仓外兄弟目录的数据文件（`../llm-agent-projects/20-llm-eval-benchmark/data/` 与
-`../agi-research-program/p1/`），数据不在本仓内，缺文件时按设计 skip。
-每个模块的 `--selftest` 全部 PASS。
+## Sibling-repo dependencies
 
-> 架构说明见 `ARCHITECTURE.md`（组件职责、数据流、自指问题处理、测试策略、关键设计决策）。
+These tests read checkouts that are not published in this repository. Point `EVAL_META_SIBLING_ROOT` at the directory that contains them, or leave it unset to use the parent of this repo. When the files are missing, the tests skip. That skip is the expected clean-clone result. It is not coverage.
 
-## 快速运行
-
-```bash
-cd eval-meta
-python3 -m pytest tests/ -q                          # 49 passed + 10 skipped（跳过项需仓外数据）
-python3 -m eval_meta.conform --selftest              # 抗污染门自检
-python3 -m eval_meta.validity --selftest             # 协议效度门自检
-python3 -m eval_meta.rigor --selftest                # 统计严谨门自检
-python3 -m eval_meta.judge --selftest                # judge 校准自检
-python3 -m eval_meta.reliab --selftest               # 可靠性估计器自检
-python3 -m eval_meta.selfaudit --selftest            # 自我审计层自检
-python3 -m eval_meta.ledger --selftest               # 证据链自检
-```
-
-### CLI 入口（7 模块流水线）
-
-```bash
-python3 -m eval_meta.cli selftest                    # 全模块自检
-python3 -m eval_meta.cli pipeline                    # 完整流水线（demo 数据）
-python3 -m eval_meta.cli pipeline \
-  --claims <path-to-claims.json> \
-  --receipts <path-to-recompute_receipts.json>   # 真实数据模式（claims/receipts JSON）
-```
-
-流水线顺序：`conform`（抗污染）→ `validity`（协议效度）→ `rigor`（统计严谨）→ `judge`（校准）→ `reliab`（可靠性）→ `selfaudit`（自我审计）→ `ledger`（证据链）。输出合法 JSON，每阶段带 verdict + 明细。
-
-**真实数据模式**（`--claims`/`--receipts`）的端到端路径已验证：30 条 claim + 23 条独立重算 receipt → **7 模块全 PASS**（`selfaudit` 用独立重算一致性作已知真值探针，`ledger` 用 claim 证据链）。
-
-> 证据边界：这 30 条 claim / 23 条 receipt 的数据文件来自仓外工作区
-> （`agi-research-program/p1/`），**不随本仓发布**，所以在独立 clone 上对应断言是 skip
-> 而不是 pass——本仓**无法自证**这组数字。机制本身可核：把同形数据喂给
-> `python3 -m eval_meta.cli pipeline --claims … --receipts …` 会输出 `"verdict": "PASS"`、
-> `"data_mode": "real"`。
-
-## 纪律
-
-- 每个模块带 `--selftest`（注入违规必须 exit≠0，AGENTS.md 第 21 条 RED→GREEN）。
-- 每个数字有载体：`ledger` 记录 evidence path + locator，无法追溯的声明不写。
-- Null 也是结果：未观测到 ≠ 不存在。
-- 独立重算是外部验证（内部程序文档 P1，该文档不在本仓内）：`ledger.recompute()` 不一致必抓。
-
-## 锚定证据（全部验号）
-
-| 证据 | 来源 | 锚定模块 |
+| tests | sibling files | clean-clone result |
 |---|---|---|
-| `2405.16281` ConStat | arXiv abs 已验号 | `conform` |
-| `2607.22368` HackDetect | arXiv abs 已验号 | `validity` |
-| Agreement by Construction | 2026 Crossref（κ 0.056→0.714 vs 0.064） | `rigor` |
-| `2502.01534` 偏好泄漏 | arXiv abs 已验号 | `judge` |
-| `2606.30219` EvalSafetyGap | arXiv abs 已验号（373 项研究） | `selfaudit` |
-| `2608.08722` 指纹化 | arXiv abs 已验号 | `selfaudit` |
-| 内部程序文档 P1（不在仓内） | 证据链纪律（预注册/主指标唯一/独立重算/Null 也是结果） | `ledger` |
+| `tests/test_integration_p1.py` (3) | `agi-research-program/p1/claims.json+recompute_receipts.json` | skip |
+| `tests/test_integration_benchmarks.py` (7) | `llm-agent-projects/20-llm-eval-benchmark/data/{mmlu,gsm8k,humaneval,mt_bench}_sample.json` | skip |
+
+## Counts
+
+Clean clone, sibling files absent: **62 passed, 10 skipped, 72 collected**.
+
+Those numbers are `eval_meta/inventory.py`. `tests/test_inventory.py` fails if collection, the `sibling_repo` marker, or this sentence drifts. The 10 skips are the two modules above and no others. Do not add the skips to the pass count.
+
+## Run
+
+```bash
+pip install -e ".[dev]"
+python -m eval_meta.cli offline
+python -m eval_meta.cli pipeline
+python -m pytest tests/ -q -rs
+```
+
+`offline` does not look for sibling clones. `pipeline` with no arguments does not either. `--claims` and `--receipts` read only the paths you pass. A `PASS` on the ledger, or on the receipt-match probe, is not a judge certificate.
+
+Not published to PyPI. There is no install badge.
+
+`FAILURE_MODES.md` records when a report can still be read as certifying a bad judge. `ARCHITECTURE.md` describes the seven checks.

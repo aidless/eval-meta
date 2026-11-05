@@ -22,12 +22,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      # 46 module tests + 10 integration + 3 CLI = 59 collected.
-      # The 10 integration tests need data files that live OUTSIDE this repo
-      # (a sibling workspace), so on a clean clone they are skipped by design.
-      # The job must therefore assert on collected count, not on "59 passed".
+      # Counts live in eval_meta/inventory.py. Sibling tests must skip here.
+      # A summary of "N passed" with no skips, or a pass count that includes
+      # those tests, fails the inventory check. Skips are not passes.
       - name: Run tests
-        run: python3 -m pytest tests/ -q -rs
+        run: |
+          set -o pipefail
+          mkdir -p /tmp/eval-meta-no-siblings
+          EVAL_META_SIBLING_ROOT=/tmp/eval-meta-no-siblings \
+            python3 -m pytest tests/ -q -rs --tb=short | tee pytest-summary.txt
+          python3 -m eval_meta.inventory --check-pytest-summary pytest-summary.txt
+
+      - name: Offline path (no sibling clones)
+        run: python3 -m eval_meta.cli offline
 
       - name: Module selftests
         run: python3 -m eval_meta.cli selftest

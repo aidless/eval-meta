@@ -77,6 +77,62 @@ class CorrectedScore:
         }
 
 
+# 本地拒绝门槛，不是论文给出的截止值。低于此 tau 的调用方记录直接拒绝。
+TAU_FLOOR = 0.50
+MIN_CALIBRATION_N = 30
+
+
+@dataclass(frozen=True)
+class JudgeCertification:
+    """对一份 judge 记录的处置。
+
+    本包没有「认证通过」这一档：certified 恒为 False。
+    status 只可能是 REFUSED（记录本身不够）或 UNVERIFIED（没有独立重算）。
+    """
+
+    status: str
+    reason: str
+    certified: bool = False
+
+    def __post_init__(self) -> None:
+        if self.certified:
+            raise ValueError("certify_judge never certifies a judge")
+        if self.status not in {"REFUSED", "UNVERIFIED"}:
+            raise ValueError(f"unknown certification status: {self.status}")
+
+
+def certify_judge(
+    calibration: JudgeCalibration | None,
+    scores: Sequence[ScoredResponse],
+    *,
+    source: str,
+) -> JudgeCertification:
+    """决定能否把这份记录说成「judge 过关」。
+
+    source:
+    - ``scripted``：流水线演示里写死的系数。不是测量。
+    - ``caller_supplied``：调用方给的校准记录。tau 与同族标记都不在这里重算。
+
+    没有 ``measured`` 来源。本仓库没有人类标注电池，不能独立认证好 judge，
+    也不能把高 tau 的调用方文件升级成 PASS。
+    """
+    if source not in {"scripted", "caller_supplied"}:
+        return JudgeCertification("REFUSED", "unknown_source")
+    if source == "scripted":
+        return JudgeCertification("UNVERIFIED", "scripted_demo")
+    if (
+        calibration is None
+        or not calibration.calibrated
+        or calibration.n_calibration < MIN_CALIBRATION_N
+    ):
+        return JudgeCertification("REFUSED", "uncalibrated")
+    if any(s.is_self_family for s in scores):
+        return JudgeCertification("REFUSED", "preference_leakage")
+    if calibration.tau < TAU_FLOOR:
+        return JudgeCertification("REFUSED", "tau_below_floor")
+    return JudgeCertification("UNVERIFIED", "caller_supplied_calibration")
+
+
 def correct(scores: Sequence[ScoredResponse], calibrations: Sequence[JudgeCalibration]) -> list[CorrectedScore]:
     """应用校准 + 抗偏好泄漏门。
 
@@ -211,6 +267,21 @@ def _run_selftest() -> int:
         failures += 1
     else:
         print(f"[PASS] RED2: uncalibrated judge flags self-family")
+
+    # RED 3：高分、未标同族、tau 很低 → 必须拒绝，不得认证
+    bad = JudgeCalibration(
+        judge="judge-bad", n_calibration=100, tau=0.05, calibrated=True,
+    )
+    cert = certify_judge(
+        bad,
+        [ScoredResponse(response_id="r4", judge="judge-bad", model="m", raw_score=9.8)],
+        source="caller_supplied",
+    )
+    if cert.certified or cert.status != "REFUSED" or cert.reason != "tau_below_floor":
+        print(f"[FAIL] RED3: low-tau judge must be REFUSED, got {cert}")
+        failures += 1
+    else:
+        print("[PASS] RED3: low-tau judge refused")
 
     print(f"\njudge 校准层 selftest: {'PASS' if failures == 0 else f'FAIL ({failures})'}")
     return failures

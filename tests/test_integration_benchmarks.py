@@ -9,21 +9,21 @@ tests/test_integration_benchmarks.py - 真实 benchmark 数据端到端验证
 """
 
 import json
-from pathlib import Path
 
 import pytest
 
 from eval_meta.conform import ModelPerformance, detect
 from eval_meta.rigor import wilson_ci, cohens_d
 from eval_meta.ledger import Claim, ClaimState, Evidence, Ledger
+from eval_meta.siblings import BENCH_SKIP, bench_file
 
-BENCH_DIR = Path(__file__).resolve().parents[2] / "llm-agent-projects" / "20-llm-eval-benchmark" / "data"
+pytestmark = pytest.mark.sibling_repo
 
 
 def _load_bench(name: str) -> dict:
-    path = BENCH_DIR / f"{name}_sample.json"
-    if not path.exists():
-        pytest.skip(f"{path} 不存在")
+    path = bench_file(name)
+    if not path.is_file():
+        pytest.skip(BENCH_SKIP)
     return json.loads(path.read_text())
 
 
