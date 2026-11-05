@@ -17,3 +17,6 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+    "sibling_repo: reads a sibling checkout that is not vendored here; skips when those files are absent, and a skip is not a pass",
+]

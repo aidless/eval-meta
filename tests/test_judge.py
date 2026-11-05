@@ -1,7 +1,7 @@
 """Judge 校准层测试——RED→GREEN 双验证。"""
 import pytest
 
-from eval_meta.judge import JudgeCalibration, ScoredResponse, correct
+from eval_meta.judge import JudgeCalibration, JudgeCertification, ScoredResponse, certify_judge, correct
 
 
 @pytest.fixture
@@ -54,3 +54,62 @@ def test_calibration_requires_min_samples():
     """n_calibration < 30 不算已校准。"""
     low = JudgeCalibration(judge="judge-C", n_calibration=10)
     assert not low.calibrated
+
+
+def _score(self_family: bool = False, raw: float = 9.5) -> ScoredResponse:
+    return ScoredResponse(
+        response_id="r", judge="judge-A", model="m", raw_score=raw, is_self_family=self_family,
+    )
+
+
+def test_low_tau_record_is_refused():
+    """高分且未标同族，但 tau 低于本地门槛 → 拒绝，不得认证。"""
+    cal = JudgeCalibration(
+        judge="judge-A", position_bias=0.4, length_bias=0.3, self_bias=0.5,
+        authority_bias=0.2, n_calibration=100, tau=0.05, calibrated=True,
+    )
+    cert = certify_judge(cal, [_score()], source="caller_supplied")
+    assert cert.certified is False
+    assert cert.status == "REFUSED"
+    assert cert.reason == "tau_below_floor"
+
+
+def test_self_family_is_refused_even_with_high_tau():
+    """同族标记优先于高 tau：拒绝，而不是认证。"""
+    cal = JudgeCalibration(
+        judge="judge-A", n_calibration=100, tau=0.90, calibrated=True,
+    )
+    cert = certify_judge(cal, [_score(self_family=True)], source="caller_supplied")
+    assert cert == JudgeCertification(status="REFUSED", reason="preference_leakage", certified=False)
+
+
+def test_uncalibrated_record_is_refused():
+    """样本量不足或未校准 → 拒绝。"""
+    cal = JudgeCalibration(judge="judge-C", n_calibration=10, tau=0.90, calibrated=False)
+    cert = certify_judge(cal, [_score()], source="caller_supplied")
+    assert cert.status == "REFUSED"
+    assert cert.reason == "uncalibrated"
+    assert cert.certified is False
+
+
+def test_scripted_demo_is_not_a_certificate():
+    """流水线里的演示系数是脚本，不是测量。"""
+    cal = JudgeCalibration(
+        judge="demo-judge", n_calibration=100, tau=0.90, calibrated=True,
+    )
+    cert = certify_judge(cal, [_score(raw=7.5)], source="scripted")
+    assert cert.status == "UNVERIFIED"
+    assert cert.reason == "scripted_demo"
+    assert cert.certified is False
+
+
+def test_high_tau_caller_record_stays_unverified():
+    """看起来很好的调用方记录仍然不是独立认证。"""
+    cal = JudgeCalibration(
+        judge="judge-A", n_calibration=100, tau=0.90, calibrated=True,
+    )
+    cert = certify_judge(cal, [_score()], source="caller_supplied")
+    assert cert.status == "UNVERIFIED"
+    assert cert.reason == "caller_supplied_calibration"
+    assert cert.certified is False
+    assert "independent" not in cert.reason

@@ -1,0 +1,19 @@
+{
+  "note": "Synthetic in-repo fixture. Not sibling-repo data. A high raw score, tau 0.05, and is_self_family false is the record the judge check used to treat as a pass.",
+  "judge": "bad-judge",
+  "tau": 0.05,
+  "n_calibration": 100,
+  "calibrated": true,
+  "position_bias": 0.4,
+  "length_bias": 0.3,
+  "self_bias": 0.5,
+  "authority_bias": 0.2,
+  "scores": [
+    {
+      "response_id": "r1",
+      "model": "unrelated-model",
+      "raw_score": 9.8,
+      "is_self_family": false
+    }
+  ]
+}
