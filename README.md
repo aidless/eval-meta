@@ -1,5 +1,7 @@
 # 评测元系统（eval-meta）工程
 
+[![CI](https://github.com/aidless/eval-meta/actions/workflows/ci.yml/badge.svg)](https://github.com/aidless/eval-meta/actions/workflows/ci.yml)
+
 > 对应「评测系统架构 · 工程蓝图」的**可运行实现**——把「评测的评测」做成一等公民的工程。
 > 所有组件锚定在已验证外部证据上（6 篇验号论文 + 1 份内部程序文档 + 373 项研究综述），每个模块的存在理由 = 一条可复现失效模式。
 
