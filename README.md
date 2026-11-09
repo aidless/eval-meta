@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/aidless/eval-meta/actions/workflows/ci.yml/badge.svg)](https://github.com/aidless/eval-meta/actions/workflows/ci.yml)
 
+> **English TL;DR**: A runnable engineering implementation of an 'evaluation-of-evaluations' meta-system: seven modules (contamination, validity, statistical rigor, judge calibration, reliability, self-audit, evidence ledger), each anchored to verified literature and each carrying a `--selftest` that must fail on injected violations. Run `python3 -m eval_meta.cli pipeline` for the staged verdict pipeline; 49 tests pass in a standalone clone. Its stance is disciplinary: every claim carries an evidence-chain entry, and an unobserved result is still a result.
+
 > 对应「评测系统架构 · 工程蓝图」的**可运行实现**——把「评测的评测」做成一等公民的工程。
 > 所有组件锚定在已验证外部证据上（6 篇验号论文 + 1 份内部程序文档 + 373 项研究综述），每个模块的存在理由 = 一条可复现失效模式。
 
