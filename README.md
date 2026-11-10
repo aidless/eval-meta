@@ -52,6 +52,21 @@ python3 -m eval_meta.cli pipeline \
   --receipts <path-to-recompute_receipts.json>   # 真实数据模式（claims/receipts JSON）
 ```
 
+**demo 模式实跑输出**（2026-11-10，`python3 -m eval_meta.cli pipeline`）：
+
+```text
+conform    → WARN   （demo-leaky L3 ratio=0.474>0.1，污染标记，故意注入）
+validity   → PASS
+rigor      → PASS
+judge      → PASS
+reliab     → PASS
+selfaudit  → WARN   （overfit demo：gap=0.22>0.15，自我审计如实报警）
+ledger     → PASS   （1 supported）
+final      → WARN   （data_mode=demo）
+```
+
+demo 数据故意带缺陷（demo-leaky / overfit），两处 WARN 是门在正确报警，不是环境问题。
+
 流水线顺序：`conform`（抗污染）→ `validity`（协议效度）→ `rigor`（统计严谨）→ `judge`（校准）→ `reliab`（可靠性）→ `selfaudit`（自我审计）→ `ledger`（证据链）。输出合法 JSON，每阶段带 verdict + 明细。
 
 **真实数据模式**（`--claims`/`--receipts`）的端到端路径已验证：30 条 claim + 23 条独立重算 receipt → **7 模块全 PASS**（`selfaudit` 用独立重算一致性作已知真值探针，`ledger` 用 claim 证据链）。
@@ -80,3 +95,20 @@ python3 -m eval_meta.cli pipeline \
 | `2606.30219` EvalSafetyGap | arXiv abs 已验号（373 项研究） | `selfaudit` |
 | `2608.08722` 指纹化 | arXiv abs 已验号 | `selfaudit` |
 | 内部程序文档 P1（不在仓内） | 证据链纪律（预注册/主指标唯一/独立重算/Null 也是结果） | `ledger` |
+
+## Limits
+
+- demo 数据模式（无 `--claims`/`--receipts`）的 verdict 只证明管道机制，不代表任何真实评测。
+- 真实数据模式的 30 claim / 23 receipt 数据文件不在本仓内（仓外工作区），独立 clone 上
+  对应集成测试按设计 skip——本仓无法自证那组数字，机制可按上面的命令复核。
+- `judge` 偏差校正最小 30 样本；样本不足时该层降级并如实标注。
+- 五九可靠性需要 ~30 万样本量级；`reliab` 在小样本下输出的是"达到目标还差多少"的估计。
+
+## 结构导览
+
+| 路径 | 内容 |
+|------|------|
+| `eval_meta/conform.py` … `ledger.py` | 7 个模块，各带 `--selftest`（注入违规必须 exit≠0） |
+| `eval_meta/cli.py` | `pipeline` 流水线入口（demo / 真实数据双模式） |
+| `tests/` | 46 模块测试 + 10 集成（仓外数据，缺文件 skip）+ 3 CLI |
+| `ARCHITECTURE.md` | 组件职责、数据流、自指问题处理、关键设计决策 |
