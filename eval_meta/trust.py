@@ -97,6 +97,7 @@ def score_kind(rows: Sequence[dict[str, Any]], kind: str,
     """给单个 edit kind 打分；证据不足返回 NOT_ASSESSED（不是可信）。"""
     precisions: list[float] = []
     verdicts: list[str] = []
+    fix_claims = 0
     invalid = 0
     for row in rows:
         if not row.get("valid", True):
@@ -107,14 +108,20 @@ def score_kind(rows: Sequence[dict[str, Any]], kind: str,
                 continue
             verdicts.append(str(edit.get("verdict") or "unknown"))
             precision = edit.get("prediction_precision")
-            if isinstance(precision, (int, float)) and not isinstance(precision, bool):
+            numeric = isinstance(precision, (int, float)) and not isinstance(precision, bool)
+            if numeric:
                 precisions.append(float(precision))
+            if edit.get("predicted_fix") or numeric:
+                # 有修复声明（或已有精度载体）的编辑才该有精度载体；
+                # 纯防回归编辑（predicted_fix 为空）本来就没有修复可对账。
+                fix_claims += 1
     n_edits = len(verdicts)
     regressions = sum(1 for v in verdicts if v == "regression")
     regression_rate = regressions / n_edits if n_edits else 0.0
     mean_precision = sum(precisions) / len(precisions) if precisions else None
     basis = (f"n_edits={n_edits}, invalid={invalid}, "
-             f"regressions={regressions}, precision_carriers={len(precisions)}")
+             f"regressions={regressions}, fix_claims={fix_claims}, "
+             f"precision_carriers={len(precisions)}")
 
     if n_edits < min_edits:
         return TrustScore(kind, n_edits, invalid, mean_precision, regression_rate,
@@ -127,7 +134,9 @@ def score_kind(rows: Sequence[dict[str, Any]], kind: str,
         reasons.append("low_prediction_precision")
     if mean_precision is None:
         reasons.append("missing_precision_carriers")
-    if not precisions or len(precisions) < n_edits:
+    if fix_claims == 0:
+        reasons.append("no_fix_claims")
+    elif len(precisions) < fix_claims:
         reasons.append("incomplete_precision_coverage")
 
     if "regression_rate_high" in reasons:
@@ -140,7 +149,8 @@ def score_kind(rows: Sequence[dict[str, Any]], kind: str,
             reasons.append("blind_prediction")
     elif (mean_precision >= PRECISION_TRUST_FLOOR
           and regression_rate <= REGRESSION_TRUST_CEIL
-          and "incomplete_precision_coverage" not in reasons):
+          and "incomplete_precision_coverage" not in reasons
+          and "no_fix_claims" not in reasons):
         level = "L1"
     else:
         level = "L2"
