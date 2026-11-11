@@ -36,7 +36,7 @@ def _numeric_values(claim: dict) -> list[float]:
 def run_selftest_all() -> int:
     """全模块 --selftest。"""
     failures = 0
-    modules = ["conform", "validity", "rigor", "judge", "reliab", "selfaudit", "ledger"]
+    modules = ["conform", "validity", "rigor", "judge", "reliab", "selfaudit", "ledger", "trust"]
     for mod in modules:
         print(f"--- {mod} ---")
         try:
