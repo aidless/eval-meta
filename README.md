@@ -112,3 +112,25 @@ demo 数据故意带缺陷（demo-leaky / overfit），两处 WARN 是门在正�
 | `eval_meta/cli.py` | `pipeline` 流水线入口（demo / 真实数据双模式） |
 | `tests/` | 46 模块测试 + 10 集成（仓外数据，缺文件 skip）+ 3 CLI |
 | `ARCHITECTURE.md` | 组件职责、数据流、自指问题处理、关键设计决策 |
+
+## 验收题库与复算
+
+`eval/cases.jsonl` 是 20 条可执行验收题，覆盖十个口径（`conform` 污染三档、`validity` 协议效度、
+`rigor` Wilson CI / κ 触及报告 / Cohen's d、`judge` 偏差扣减 / 未校准 / 最小二乘校准电池、
+`reliab` 五九样本量、`selfaudit` 探针容差与失效分级、`ledger` 证据链与独立重算、`trust` 三态信任、
+`cli` demo 流水线、README 自述口径）。其中 **18 条 `expr` + 1 条 `raises` 直接 import 本仓模块现算**，
+期望值不是抄文档，而是真跑出来的；1 条 `doc` 钉住 README 自称的独立 clone 结果。
+
+```bash
+python3 eval/run_cases.py            # 20/20 cases passed
+python3 eval/run_cases.py --save     # 顺带把结果写进 eval/run-report.json
+python3 eval/run_cases.py --selftest # 篡改第一条期望值，必须变红（证明这套题会失败）
+```
+
+**数字如何复算**：`eval/run-report.json` 里每条 case 都带 `id` / `axis` / `detail`，
+把 `detail` 与 `cases.jsonl` 的 `verify` 代码一起看，就能从源码复现该数字
+（例如 RE-01 的 299571.7 = `ln(0.05)/ln(0.99999)`，源码 docstring 里的「≈299,573」是量级近似）。
+`--save` 重跑一次即可重建整份报告，不需要手工抄数。
+
+**失败归因**：`run_cases.py` 不只报通过率，失败时按 `axis` 汇总（例如
+`conform/污染分级: 1 条 —— CF-01`），直接指出是哪个模块的哪个口径坏了。

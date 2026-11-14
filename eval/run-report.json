@@ -1,0 +1,129 @@
+{
+ "total": 20,
+ "passed": 20,
+ "failed": 0,
+ "selftest": false,
+ "failed_by_axis": {},
+ "results": [
+  {
+   "id": "CF-01",
+   "axis": "conform/污染分级",
+   "ok": true,
+   "detail": "L2:0.0444:True"
+  },
+  {
+   "id": "CF-02",
+   "axis": "conform/污染分级",
+   "ok": true,
+   "detail": "0.10|L1|False"
+  },
+  {
+   "id": "VA-01",
+   "axis": "validity/协议效度",
+   "ok": true,
+   "detail": "5:False:0.50"
+  },
+  {
+   "id": "VA-02",
+   "axis": "validity/协议效度",
+   "ok": true,
+   "detail": "True:False:no_exposure,gap=0.0150"
+  },
+  {
+   "id": "RI-01",
+   "axis": "rigor/统计量",
+   "ok": true,
+   "detail": "0.7112,0.8666"
+  },
+  {
+   "id": "RI-02",
+   "axis": "rigor/统计量",
+   "ok": true,
+   "detail": "-0.3333|1.0000|-1.0000|True|40"
+  },
+  {
+   "id": "RI-03",
+   "axis": "rigor/统计量",
+   "ok": true,
+   "detail": "1.643168|-1.643168"
+  },
+  {
+   "id": "JU-01",
+   "axis": "judge/校准",
+   "ok": true,
+   "detail": "7.9500|calibrated,deduct=0.0500"
+  },
+  {
+   "id": "JU-02",
+   "axis": "judge/校准",
+   "ok": true,
+   "detail": "8.0|uncalibrated,preference_leakage|True"
+  },
+  {
+   "id": "JU-03",
+   "axis": "judge/校准",
+   "ok": true,
+   "detail": "True|0.500000|2.000000|0.000000|40"
+  },
+  {
+   "id": "RE-01",
+   "axis": "reliab/五九样本量",
+   "ok": true,
+   "detail": "299571.7"
+  },
+  {
+   "id": "RE-02",
+   "axis": "reliab/五九样本量",
+   "ok": true,
+   "detail": "raised ValueError"
+  },
+  {
+   "id": "SA-01",
+   "axis": "selfaudit/自我审计",
+   "ok": true,
+   "detail": "True|False"
+  },
+  {
+   "id": "SA-02",
+   "axis": "selfaudit/自我审计",
+   "ok": true,
+   "detail": "gamed|is_gamed|benign|gap=0.1400<=0.15"
+  },
+  {
+   "id": "LE-01",
+   "axis": "ledger/证据链",
+   "ok": true,
+   "detail": "1|False|['c1']|missing"
+  },
+  {
+   "id": "LE-02",
+   "axis": "ledger/证据链",
+   "ok": true,
+   "detail": "1|1|1|1"
+  },
+  {
+   "id": "TR-01",
+   "axis": "trust/信任分级",
+   "ok": true,
+   "detail": "L3|('regression_rate_high',)|8|1.00"
+  },
+  {
+   "id": "TR-02",
+   "axis": "trust/信任分级",
+   "ok": true,
+   "detail": "NOT_ASSESSED|('insufficient_evidence',)|BLOCK"
+  },
+  {
+   "id": "CL-01",
+   "axis": "cli/流水线",
+   "ok": true,
+   "detail": "0|WARN|7|WARN|WARN"
+  },
+  {
+   "id": "DOC-01",
+   "axis": "readme/口径",
+   "ok": true,
+   "detail": "49 passed + 10 skipped"
+  }
+ ]
+}
