@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 from eval_meta.conform import ModelPerformance, detect
-from eval_meta.rigor import wilson_ci, cohens_d
+from eval_meta.rigor import wilson_ci
 from eval_meta.ledger import Claim, ClaimState, Evidence, Ledger
 
 BENCH_DIR = Path(__file__).resolve().parents[2] / "llm-agent-projects" / "20-llm-eval-benchmark" / "data"

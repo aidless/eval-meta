@@ -153,7 +153,7 @@ def _run_selftest() -> int:
     )
     v = audit([exposed])[0]
     if v.valid:
-        print(f"[FAIL] RED1: exposed trajectory should be invalid")
+        print("[FAIL] RED1: exposed trajectory should be invalid")
         failures += 1
     else:
         print(f"[PASS] RED1: exposed invalid ({v.basis})")
@@ -165,7 +165,7 @@ def _run_selftest() -> int:
     )
     v = audit([gap_inflated])[0]
     if v.valid:
-        print(f"[FAIL] RED2: gap-inflated trajectory should be invalid")
+        print("[FAIL] RED2: gap-inflated trajectory should be invalid")
         failures += 1
     else:
         print(f"[PASS] RED2: gap-inflated invalid (gap={v.mislead_gap:.4f})")
@@ -183,7 +183,7 @@ def _run_selftest() -> int:
         print(f"[FAIL] RED3: should classify all 5 hack types, got {len(v.exposed_types)}")
         failures += 1
     else:
-        print(f"[PASS] RED3: all 5 hack types classified")
+        print("[PASS] RED3: all 5 hack types classified")
 
     print(f"\n协议效度门 selftest: {'PASS' if failures == 0 else f'FAIL ({failures})'}")
     return failures

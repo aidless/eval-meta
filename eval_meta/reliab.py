@@ -119,7 +119,7 @@ def _run_selftest() -> int:
     results = [True] * n
     est = estimate_reliability(results, target_reliability=0.99999)
     if not est.meets_target:
-        print(f"[FAIL] GREEN1: sufficient clean samples → should meet five-nine")
+        print("[FAIL] GREEN1: sufficient clean samples → should meet five-nine")
         failures += 1
     else:
         print(f"[PASS] GREEN1: meets five-nine (R={est.reliability:.6f}, n={n})")
@@ -128,7 +128,7 @@ def _run_selftest() -> int:
     results = [True] * 100  # 只有 100 样本
     est = estimate_reliability(results, target_reliability=0.99999)
     if est.meets_target:
-        print(f"[FAIL] RED1: insufficient samples → should NOT meet five-nine")
+        print("[FAIL] RED1: insufficient samples → should NOT meet five-nine")
         failures += 1
     else:
         print(f"[PASS] RED1: insufficient samples correctly rejected (n_needed={est.n_needed_for_target:.0f})")
@@ -137,7 +137,7 @@ def _run_selftest() -> int:
     results = [True] * 999 + [False]  # 1 故障 / 1000
     est = estimate_reliability(results, target_reliability=0.99999)
     if est.meets_target:
-        print(f"[FAIL] RED2: failures → should NOT meet five-nine")
+        print("[FAIL] RED2: failures → should NOT meet five-nine")
         failures += 1
     else:
         print(f"[PASS] RED2: failures correctly rejected (R={est.reliability:.6f})")
@@ -145,7 +145,7 @@ def _run_selftest() -> int:
     # RED 3：样本量公式必须给出正数（五九需要大量样本）
     n = sample_size_for_reliability(0.99999, 0.95)
     if n <= 0:
-        print(f"[FAIL] RED3: sample size should be positive")
+        print("[FAIL] RED3: sample size should be positive")
         failures += 1
     else:
         print(f"[PASS] RED3: sample size n={n:.0f} (positive)")

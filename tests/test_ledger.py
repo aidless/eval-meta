@@ -1,5 +1,4 @@
 """证据链 ledger 测试——RED→GREEN。"""
-import pytest
 
 from eval_meta.ledger import (
     Claim, ClaimState, Evidence, Ledger,

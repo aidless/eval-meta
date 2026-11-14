@@ -15,8 +15,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Mapping, Sequence
+from dataclasses import dataclass
+from typing import Sequence
 
 # --- 工程阈值（相对差三档，来自知识库污染分级）---
 L1_MAX = 0.02   # 2% 相对差以内 = 干净
@@ -165,7 +165,7 @@ def _run_selftest() -> int:
     )
     v = detect([inverted])[0]
     if v.contaminated:
-        print(f"[FAIL] RED3: inverted model (base<generalization) should NOT be contaminated")
+        print("[FAIL] RED3: inverted model (base<generalization) should NOT be contaminated")
         failures += 1
     else:
         print(f"[PASS] RED3: inverted model not contaminated (expansion={v.expansion:.4f})")

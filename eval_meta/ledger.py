@@ -21,7 +21,6 @@ import json
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Sequence
 
 
 class ClaimState(str, Enum):
@@ -175,7 +174,7 @@ def _run_selftest() -> int:
                      Evidence("eval_meta/conform.py", "L3_threshold"), ClaimState.SUPPORTED))
     report = ledger.verify()
     if not report["all_verifiable"]:
-        print(f"[FAIL] GREEN1: all claims with evidence → should be verifiable")
+        print("[FAIL] GREEN1: all claims with evidence → should be verifiable")
         failures += 1
     else:
         print(f"[PASS] GREEN1: all verifiable ({report['supported']} supported)")
@@ -185,10 +184,10 @@ def _run_selftest() -> int:
     ledger.add(Claim("c3", "某模型 100% 准确率", 1.0, "score", None))
     report = ledger.verify()
     if report["all_verifiable"] or report["missing"] != 1:
-        print(f"[FAIL] RED1: no-evidence claim → should be missing")
+        print("[FAIL] RED1: no-evidence claim → should be missing")
         failures += 1
     else:
-        print(f"[PASS] RED1: no-evidence claim marked missing")
+        print("[PASS] RED1: no-evidence claim marked missing")
 
     # RED 2：独立重算必须能抓到不一致
     ledger = Ledger()
@@ -197,18 +196,18 @@ def _run_selftest() -> int:
     # 重算返回 0.85（不一致）
     report = ledger.recompute(lambda c: 0.85)
     if report["recompute_mismatch"] != 1:
-        print(f"[FAIL] RED2: recompute should detect mismatch")
+        print("[FAIL] RED2: recompute should detect mismatch")
         failures += 1
     else:
-        print(f"[PASS] RED2: recompute mismatch detected")
+        print("[PASS] RED2: recompute mismatch detected")
 
     # GREEN 2：独立重算一致 → 通过
     report = ledger.recompute(lambda c: 0.80)
     if report["recompute_match"] != 1:
-        print(f"[FAIL] GREEN2: recompute match should pass")
+        print("[FAIL] GREEN2: recompute match should pass")
         failures += 1
     else:
-        print(f"[PASS] GREEN2: recompute match confirmed")
+        print("[PASS] GREEN2: recompute match confirmed")
 
     print(f"\n证据链 ledger selftest: {'PASS' if failures == 0 else f'FAIL ({failures})'}")
     return failures

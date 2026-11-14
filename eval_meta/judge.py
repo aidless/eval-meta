@@ -15,7 +15,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Sequence
 
 import numpy as np
@@ -197,20 +197,20 @@ def _run_selftest() -> int:
                        raw_score=8.5, is_self_family=True)
     r = correct([s], [cal])[0]
     if not r.preference_leakage:
-        print(f"[FAIL] RED1: self-family should be flagged as preference leakage")
+        print("[FAIL] RED1: self-family should be flagged as preference leakage")
         failures += 1
     else:
-        print(f"[PASS] RED1: self-family flagged")
+        print("[PASS] RED1: self-family flagged")
 
     # RED 2：未校准 judge 不做偏差校正，但仍判偏好泄漏
     s = ScoredResponse(response_id="r3", judge="judge-B", model="m-same-family",
                        raw_score=8.0, is_self_family=True)
     r = correct([s], [cal])[0]
     if not r.preference_leakage:
-        print(f"[FAIL] RED2: uncalibrated judge should still flag self-family")
+        print("[FAIL] RED2: uncalibrated judge should still flag self-family")
         failures += 1
     else:
-        print(f"[PASS] RED2: uncalibrated judge flags self-family")
+        print("[PASS] RED2: uncalibrated judge flags self-family")
 
     print(f"\njudge 校准层 selftest: {'PASS' if failures == 0 else f'FAIL ({failures})'}")
     return failures

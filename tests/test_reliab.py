@@ -1,5 +1,4 @@
 """可靠性估计器测试——RED→GREEN。"""
-import pytest
 
 from eval_meta.reliab import (
     estimate_reliability, sample_size_for_reliability,

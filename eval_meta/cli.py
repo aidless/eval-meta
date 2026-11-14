@@ -47,7 +47,7 @@ def run_selftest_all() -> int:
                 if rc != 0:
                     failures += 1
             else:
-                print(f"  [SKIP] no _run_selftest")
+                print("  [SKIP] no _run_selftest")
         except Exception as e:
             print(f"  [ERROR] {e}")
             failures += 1

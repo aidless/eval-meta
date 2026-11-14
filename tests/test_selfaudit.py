@@ -1,5 +1,4 @@
 """自我审计层测试——RED→GREEN。"""
-import pytest
 
 from eval_meta.selfaudit import (
     FailureMode, Migration, Probe, classify_failure, run_probe_battery,

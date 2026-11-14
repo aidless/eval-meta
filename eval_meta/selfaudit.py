@@ -185,7 +185,7 @@ def _run_selftest() -> int:
     probes = [Probe("p1", true_value=0.80), Probe("p2", true_value=0.60)]
     report = run_probe_battery(probes, lambda p: p.true_value + 0.01)  # 测量接近真值
     if not report.system_healthy:
-        print(f"[FAIL] GREEN1: accurate probes → system should be healthy")
+        print("[FAIL] GREEN1: accurate probes → system should be healthy")
         failures += 1
     else:
         print(f"[PASS] GREEN1: probes healthy ({report.detail})")
@@ -193,7 +193,7 @@ def _run_selftest() -> int:
     # RED 1：探针超出容差 → 系统不健康（系统自己失效）
     report = run_probe_battery(probes, lambda p: p.true_value + 0.10)  # 测量偏 10%
     if report.system_healthy:
-        print(f"[FAIL] RED1: inaccurate probes → system should be unhealthy")
+        print("[FAIL] RED1: inaccurate probes → system should be unhealthy")
         failures += 1
     else:
         print(f"[PASS] RED1: probes detect system failure ({report.detail})")

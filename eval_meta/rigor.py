@@ -164,7 +164,7 @@ def _run_selftest() -> int:
     ]
     r = kappa_touch_report(decisions)
     if r.kappa_inflated_by_touching:
-        print(f"[FAIL] GREEN1: no touching rule → should not be inflated")
+        print("[FAIL] GREEN1: no touching rule → should not be inflated")
         failures += 1
     else:
         print(f"[PASS] GREEN1: no touching (kappa_untouched={r.kappa_untouched:.3f})")
@@ -175,7 +175,7 @@ def _run_selftest() -> int:
     untouched = [AgreementDecision(f"u{i}", judge_verdict=(i % 2 == 0), human_verdict=(i % 2 == 1), touched=False) for i in range(20)]
     r = kappa_touch_report(touched + untouched)
     if not r.kappa_inflated_by_touching:
-        print(f"[FAIL] RED1: touching rule should be flagged as inflated")
+        print("[FAIL] RED1: touching rule should be flagged as inflated")
         failures += 1
     else:
         print(f"[PASS] RED1: touching flagged (kappa_touched={r.kappa_touched:.3f} vs untouched={r.kappa_untouched:.3f})")
@@ -183,7 +183,7 @@ def _run_selftest() -> int:
     # RED 2：Cohen's d 效应量必须有正负方向
     d = cohens_d([1.0, 2.0, 3.0, 4.0], [1.0, 1.0, 1.0, 1.0])
     if d <= 0:
-        print(f"[FAIL] RED2: cohens_d should be positive (A>B)")
+        print("[FAIL] RED2: cohens_d should be positive (A>B)")
         failures += 1
     else:
         print(f"[PASS] RED2: cohens_d={d:.3f} (A>B, positive)")
